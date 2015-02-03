@@ -3,7 +3,7 @@
 /**
  * List of terms
  *
- * @author micobg
+ * @author Mihail Nikolov <micobg@gmail.com>
  */
 class TermsList {
     

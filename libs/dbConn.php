@@ -3,7 +3,7 @@
 /**
  * Connection to MySQL database
  *
- * @author micobg
+ * @author Mihail Nikolov <micobg@gmail.com>
  */
 class dbConn {
     

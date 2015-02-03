@@ -3,7 +3,7 @@
 /**
  * Term (word)
  *
- * @author micobg
+ * @author Mihail Nikolov <micobg@gmail.com>
  */
 class Term {
 
@@ -16,14 +16,18 @@ class Term {
         $this->term = $term;
         
         $this->dbConn = dbConn::getInstance();
-        
+    }
+
+    /**
+     * Save term if it is new and set termId
+     */
+    public function save() {
         $result = $this->fetch();
         if (!$result) {
             $this->insert();
         }
-        
     }
-    
+
     protected function fetch() {
         $searchTerm = $this->dbConn->prepare("SELECT id FROM terms WHERE term = '" . $this->term . "'");
         $result = $searchTerm->execute();
@@ -35,7 +39,8 @@ class Term {
         if (!$termId) {
             return FALSE;
         }
-        
+
+        // set termId
         $this->id = $termId;
         
         return TRUE;
@@ -58,7 +63,16 @@ class Term {
         
         return FALSE;
     }
-    
+
+    /**
+     * Is the word a stop word
+     *
+     * @return boolean
+     */
+    public function isStopWord() {
+        return array_search($this->term, $this->stopWords) === FALSE ? FASLE : TRUE;
+    }
+
     /**
      * Term's getter
      * 
