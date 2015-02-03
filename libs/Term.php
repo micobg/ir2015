@@ -33,40 +33,38 @@ class Term {
         }
     }
 
+    /**
+     * Fetch term from db
+     * 
+     * @return array term from db
+     */
     protected function fetch() {
-        $searchTerm = $this->dbConn->prepare("SELECT id FROM terms WHERE term = '" . $this->term . "'");
-        $result = $searchTerm->execute();
-        if (!$result) {
-            return FALSE;
-        }
+        $searchTerm = $this->dbConn->prepare("SELECT * FROM terms WHERE term = '" . $this->term . "'");
+        $searchTerm->execute();
         
-        $termId = $searchTerm->fetchColumn();
-        if (!$termId) {
-            return FALSE;
-        }
+        $term = $searchTerm->fetch(PDO::FETCH_ASSOC);
 
         // set termId
-        $this->id = $termId;
+        $this->id = (int)$term['id'];
         
-        return TRUE;
+        return $term;
     }
 
     /**
      * Insert the term in db and return the id of the term
      * 
-     * @return int termId
+     * @return int id of inserted term
      */
     protected function insert() {
         $insertTerm = $this->dbConn->prepare("INSERT INTO terms(term) VALUES ('" . $this->term . "')");
         $result = $insertTerm->execute();
-
-        if ($result) {
-            $this->id = $this->dbConn->lastInsertId();
-            
-            return TRUE;
+        if (!$result) {
+            throw new Exception('Insertion of term into db failed', 500);
         } 
+
+        $this->id = $this->dbConn->lastInsertId();
         
-        return FALSE;
+        return $this->id;
     }
 
     /**
@@ -75,7 +73,7 @@ class Term {
      * @return boolean
      */
     public function isStopWord() {
-        return array_search($this->term, $this->stopWords) === FALSE ? FASLE : TRUE;
+        return array_search($this->term, $this->stopWords) === FALSE ? FALSE : TRUE;
     }
 
     /**

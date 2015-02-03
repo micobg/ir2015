@@ -26,10 +26,10 @@ class Document {
 
         // insert the document in db
         $this->insert();
-        
+
         // init terms list
         $this->termsList = new TermsList();
-        
+
         // save terms and relations
         $this->manageMatches();
     }
@@ -69,22 +69,43 @@ class Document {
      * relations.
      */
     protected function manageMatches() {
+        $invertedIndex = new InvertedIndex();
+        
         $matches = $this->extractTerms();
+//        
+//        $termsToBeInserted = array();
+//        foreach ($matches as $index => $word) {
+//            // normalize
+//            $word = mb_strtolower($word, $this->encoding);
+//            
+//            // skip stop words
+//            $termObj = new Term($word);
+//            
+//            if ($termObj->isStopWord()) {
+//                continue;
+//            }
+//            
+//        }
+        
+        
+        
         foreach ($matches as $index => $word) {
             // normalize
             $word = mb_strtolower($word, $this->encoding);
 
             // skip stop words
             $termObj = new Term($word);
+            
             if ($termObj->isStopWord()) {
                 continue;
             }
-
+            
             // save the term
             $termObj->save();
             $this->termsList->insert($termObj);
             
-            // TODO: save term-doc relation (inverted index)
+            // save term-doc relation (inverted index) and position of occurrance
+            $invertedIndex->addRelation($termObj, $this, $index);
             
             unset($termObj);
         }
@@ -96,13 +117,22 @@ class Document {
      * Find all potential terms from the document
      */
     protected function extractTerms() {        
+        $this->encoding = mb_detect_encoding($this->content);
+
         // get all words in the file
         $matches = array();
-        preg_match_all('/\w*/iu', $this->content, $matches);
+        preg_match_all('/\w+/iu', $this->content, $matches);
         
-        $this->encoding = mb_detect_encoding($this->content);
-        
-        return array_unique(array_filter($matches[0]));
+        return $matches[0];
+    }
+    
+    /**
+     * Term's id getter
+     * 
+     * @return string
+     */
+    public function getId() {
+        return $this->id;
     }
     
 }
