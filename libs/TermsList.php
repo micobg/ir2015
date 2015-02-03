@@ -26,7 +26,7 @@ class TermsList {
      * 
      * @param Term $termObj
      */
-    public function insert(Term $termObj) {
+    public function insert($termObj) {
         $this->list[$termObj->getTerm()] = $termObj;
     }
     
