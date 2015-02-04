@@ -17,10 +17,26 @@ class Document {
 
     protected $termsList;
 
+    /**
+     * Init document object
+     *
+     * @param string $filename
+     * @throws Exception
+     */
     public function __construct($filename) {
         $this->dbConn = dbConn::getInstance();
+        if (empty($filename) || file_exists(FILES_DIR . $filename)) {
+            throw new Exception('Bad request: file does not exist', 400);
+        }
         $this->fileName = $filename;
-        
+    }
+
+    /**
+     * Extract all terms and build inverted index
+     *
+     * @throws Exception
+     */
+    public function setup() {
         // get files content
         $this->getFileContent();
 

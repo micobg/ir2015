@@ -7,6 +7,11 @@ ini_set('display_errors', 1);
 require_once 'config.php';
 
 /**
+ * Constants
+ */
+define(FILES_DIR, 'files' . DIRECTORY_SEPARATOR);
+
+/**
      * Class autoloader
  * 
  * @param string $className

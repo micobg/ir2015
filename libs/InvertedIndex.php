@@ -59,12 +59,14 @@ class InvertedIndex {
         
         return $invertedIndexId;
     }
-    
+
     /**
      * Add occurrences to object and insert into db
-     * 
+     *
      * @param int $invertedIndexId
      * @param int $position
+     *
+     * @throws Exception
      */
     protected function addOccurrence($invertedIndexId, $position) {
         // insert into db
