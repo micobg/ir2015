@@ -25,10 +25,11 @@ class Document {
      */
     public function __construct($filename) {
         $this->dbConn = dbConn::getInstance();
-        if (empty($filename) || file_exists(FILES_DIR . $filename)) {
+
+        if (empty($filename) || !file_exists(FILES_DIR . $filename)) {
             throw new Exception('Bad request: file does not exist', 400);
         }
-        $this->fileName = $filename;
+        $this->fileName = FILES_DIR . $filename;
     }
 
     /**
@@ -54,8 +55,9 @@ class Document {
      * Insert document in db
      */
     protected function insert() {
-        $this->title = strtok($this->content, "\n");
-        
+        // get firat line and use it as title
+        $this->title = trim(strtok($this->content, "\n"));
+
         $insertDoc = $this->dbConn->prepare(""
             . "INSERT INTO docs(file_name, title) "
             . "VALUES ('" . $this->fileName . "', '" . $this->title . "')");
@@ -86,25 +88,8 @@ class Document {
      */
     protected function manageMatches() {
         $invertedIndex = new InvertedIndex();
-        
+
         $matches = $this->extractTerms();
-//        
-//        $termsToBeInserted = array();
-//        foreach ($matches as $index => $word) {
-//            // normalize
-//            $word = mb_strtolower($word, $this->encoding);
-//            
-//            // skip stop words
-//            $termObj = new Term($word);
-//            
-//            if ($termObj->isStopWord()) {
-//                continue;
-//            }
-//            
-//        }
-        
-        
-        
         foreach ($matches as $index => $word) {
             // normalize
             $word = mb_strtolower($word, $this->encoding);
@@ -118,10 +103,17 @@ class Document {
             
             // save the term
             $termObj->save();
-            $this->termsList->insert($termObj);
             
-            // save term-doc relation (inverted index) and position of occurrance
-            $invertedIndex->addRelation($termObj, $this, $index);
+            // add to term list
+            if ($this->termsList->contains($termObj)) {
+                // just add new occurrence
+                $invertedIndex->addOccurrence($invertedIndex->getInvertedIndex($termObj, $this), $index);
+            } else {
+                $this->termsList->insert($termObj);
+    
+                // save term-doc relation (inverted index) and position of occurrance
+                $invertedIndex->addRelation($termObj, $this, $index);
+            }
             
             unset($termObj);
         }
@@ -141,19 +133,6 @@ class Document {
         
         return $matches[0];
     }
-    
-    /**
-     * Return all indexed documents (from db)
-     * 
-     * @return array list of all documents
-     */
-    public function getAllDocuments() {
-        $selectAllDocs = $this->dbConn->prepare("SELECT * FROM docs");
-        $selectAllDocs->execute();
-        
-        return $selectAllDocs->fetch(PDO::FETCH_ASSOC);
-    }
-
 
     /**
      * Term's id getter

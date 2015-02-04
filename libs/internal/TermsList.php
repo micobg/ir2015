@@ -30,4 +30,8 @@ class TermsList {
         $this->list[$termObj->getTerm()] = $termObj;
     }
     
+    public function contains($termObj) {
+        return isset($this->list[$termObj->getTerm()]);
+    }
+    
 }

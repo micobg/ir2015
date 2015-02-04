@@ -10,13 +10,17 @@ class InvertedIndex {
     protected $dbConn;
     
     protected $relations;
+    
+    // map relations by termId_docId
+    protected $relationsMap;
 
     public function __construct() {
         $this->dbConn = dbConn::getInstance();
     }
     
     /**
-     * Add relation to the inverted index
+     * Add relation to the inverted index and add first occurence for this 
+     * relation term-doc
      *
      * @param Term $term term object
      * @param Document $doc document object
@@ -48,7 +52,7 @@ class InvertedIndex {
         if (!$result) {
             throw new Exception('Insertion of relation into inverted index failed', 500);
         }
-        $invertedIndexId = $this->dbConn->lastInsertId();
+        $invertedIndexId = (int)$this->dbConn->lastInsertId();
         
         // add to the object
         $this->relations[$invertedIndexId] = array(
@@ -56,6 +60,9 @@ class InvertedIndex {
             'term_id' => $term->getId(),
             'occurrences' => array()
         );
+        
+        // keep relations map updated
+        $this->relationsMap[$term->getId() . $doc->getId()] = $invertedIndexId;
         
         return $invertedIndexId;
     }
@@ -68,7 +75,7 @@ class InvertedIndex {
      *
      * @throws Exception
      */
-    protected function addOccurrence($invertedIndexId, $position) {
+    public function addOccurrence($invertedIndexId, $position) {
         // insert into db
         $insertOccurrence = $this->dbConn->prepare(""
             . "INSERT INTO occurrences(inverted_index_id, `position`) "
@@ -79,5 +86,17 @@ class InvertedIndex {
         } 
         
         $this->relations[$invertedIndexId]['occurrences'][] = $position;
+    }
+    
+    /**
+     * Return inverted_index_id by term and document
+     * 
+     * @param Term $term
+     * @param Doc $doc
+     * 
+     * @return int inverted_index_id
+     */
+    public function getInvertedIndex($term, $doc) {
+        return $this->relationsMap[$term->getId() . $doc->getId()];
     }
 }

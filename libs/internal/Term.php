@@ -27,9 +27,11 @@ class Term {
      * Save term if it is new and set termId
      */
     public function save() {
-        $result = $this->fetch();
-        if (!$result) {
-            $this->insert();
+        $term = $this->fetch();
+        if (empty($term)) {
+            $this->id = $this->insert();
+        } else {
+            $this->id = $term['id'];
         }
     }
 
@@ -42,12 +44,7 @@ class Term {
         $searchTerm = $this->dbConn->prepare("SELECT * FROM terms WHERE term = '" . $this->term . "'");
         $searchTerm->execute();
         
-        $term = $searchTerm->fetch(PDO::FETCH_ASSOC);
-
-        // set termId
-        $this->id = (int)$term['id'];
-        
-        return $term;
+        return $searchTerm->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -64,7 +61,7 @@ class Term {
 
         $this->id = $this->dbConn->lastInsertId();
         
-        return $this->id;
+        return (int)$this->id;
     }
 
     /**

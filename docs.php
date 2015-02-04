@@ -9,64 +9,55 @@
 <?php
 require_once 'base.php';
 
-/**
- * Return list of all files in given dir (and sub dirs recursively)
- *
- * @param $dir
- * @return array
- */
-function dirToArray($dir) {
-    $result = array();
-
-    $ls = scandir($dir);
-    foreach ($ls as $value)
-    {
-        if (!in_array($value, array('.', '..')))
-        {
-            if (is_dir($dir . DIRECTORY_SEPARATOR . $value))
-            {
-                $result[] = $value . DIRECTORY_SEPARATOR . dirToArray($dir . DIRECTORY_SEPARATOR . $value);
-            }
-            else
-            {
-                $result[] = $value;
-            }
-        }
-    }
-
-    return $result;
-}
-
-
-
 $error = '';
-$fileName = htmlspecialchars($_GET['filename']);
-
-if (!empty($fileName)) {
+$getFile = htmlspecialchars($_GET['file']);
+if (!empty($getFile)) {
     // run for specific file
     try {
-        $doc = new Document('text_001_2.txt');
+        $doc = new Document($getFile);
         $doc->setup();
     } catch (Exception $ex) {
         $error = 'Exception: ' + $ex->getMessage();
     }
+    
+    if(empty($error)) {
+    ?>
+        Файлът <strong><?php echo $getFile; ?></strong> е индексиран успешно!
+    <?php
+    } else {
+        echo $error;
+    }
+    ?>
+        <br />
+        <a href="<?php echo BASE_URL . 'docs.php'; ?>">Към списъка с файловете за индексиране</a> | 
+        <a href="<?php echo BASE_URL; ?>">Към търсачката</a>
+    <?php
 } else {
-    // list all files that are not indexed
-    $allFiles = dirToArray(FILES_DIR);
-    
-    
-?>
+    $documentsManager = new DocumentsManager();
+    $files = $documentsManager->getUnindexedFiles();
+
+    if (!empty($files)) {
+    ?>
+    Изберете файл за индексиране:<br />
         <ul>
             <?php 
-            foreach ($allFiles as $file) {
+            foreach ($files as $file) {
             ?>
-            <li><a href="<?php echo BASE_URL . 'docs.php?filename=' . $file; ?>" alt="Click to index"><?php echo $file; ?></a></li>
+            <li><a href="<?php echo BASE_URL . 'docs.php?file=' . $file; ?>" alt="Индексирай"><?php echo $file; ?></a></li>
             <?php
             }
             ?>
         </ul>
-        
-<?php
+    <?php
+    } else {
+    ?>
+    Няма фалйвое за индексиране.
+    <?php
+    }
+    ?>
+    <br >
+    <a href="<?php echo BASE_URL; ?>">Към търсачката</a>
+    <?php
 }
 
 

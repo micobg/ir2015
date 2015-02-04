@@ -15,7 +15,7 @@ require_once 'libs' . DIRECTORY_SEPARATOR . 'external' . DIRECTORY_SEPARATOR . '
  * Constants
  */
 define(FILES_DIR, 'files' . DIRECTORY_SEPARATOR);
-define(BASE_URL, 'http://localhost/');
+define(BASE_URL, 'http://localhost/ir2015/');
 
 /**
      * Class autoloader

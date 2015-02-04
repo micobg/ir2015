@@ -10,8 +10,8 @@
 require_once 'base.php';
 
 try {
-    $doc = new Document('text_001_2.txt');
-    $doc->setup();
+//    $doc = new Document('text_001_2.txt');
+//    $doc->setup();
 } catch (Exception $ex) {
     echo 'Exception: ' + $ex->getMessage();
 }
