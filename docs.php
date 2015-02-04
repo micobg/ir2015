@@ -53,6 +53,20 @@ if (!empty($fileName)) {
 } else {
     // list all files that are not indexed
     $allFiles = dirToArray(FILES_DIR);
+    
+    
+?>
+        <ul>
+            <?php 
+            foreach ($allFiles as $file) {
+            ?>
+            <li><a href="<?php echo BASE_URL . 'docs.php?filename=' . $file; ?>" alt="Click to index"><?php echo $file; ?></a></li>
+            <?php
+            }
+            ?>
+        </ul>
+        
+<?php
 }
 
 

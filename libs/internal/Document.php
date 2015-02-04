@@ -143,6 +143,19 @@ class Document {
     }
     
     /**
+     * Return all indexed documents (from db)
+     * 
+     * @return array list of all documents
+     */
+    public function getAllDocuments() {
+        $selectAllDocs = $this->dbConn->prepare("SELECT * FROM docs");
+        $selectAllDocs->execute();
+        
+        return $selectAllDocs->fetch(PDO::FETCH_ASSOC);
+    }
+
+
+    /**
      * Term's id getter
      * 
      * @return string
