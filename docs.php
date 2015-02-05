@@ -10,7 +10,7 @@
 require_once 'base.php';
 
 $error = '';
-$getFile = htmlspecialchars($_GET['file']);
+$getFile = urldecode($_GET['file']);
 if (!empty($getFile)) {
     // run for specific file
     try {
@@ -43,7 +43,7 @@ if (!empty($getFile)) {
             <?php 
             foreach ($files as $file) {
             ?>
-            <li><a href="<?php echo BASE_URL . 'docs.php?file=' . $file; ?>" alt="Индексирай"><?php echo $file; ?></a></li>
+            <li><a href="<?php echo BASE_URL . 'docs.php?file=' . urlencode($file); ?>" alt="Индексирай"><?php echo $file; ?></a></li>
             <?php
             }
             ?>

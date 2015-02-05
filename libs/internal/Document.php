@@ -57,7 +57,7 @@ class Document {
     protected function insert() {
         // get firat line and use it as title
         $this->title = trim(strtok($this->content, "\n"));
-
+        
         $insertDoc = $this->dbConn->prepare(""
             . "INSERT INTO docs(file_name, title) "
             . "VALUES ('" . $this->fileName . "', '" . $this->title . "')");
