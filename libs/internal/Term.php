@@ -24,6 +24,14 @@ class Term {
     }
 
     /**
+     * Init term
+     */
+    public function init() {
+        $term = $this->fetch();
+        $this->id = !empty($term) ? $term['id'] : 0;
+    }
+    
+    /**
      * Save term if it is new and set termId
      */
     public function save() {
@@ -62,6 +70,23 @@ class Term {
         $this->id = $this->dbConn->lastInsertId();
         
         return (int)$this->id;
+    }
+    
+    /**
+     * Retrun list of documents where the term occurs   
+     * 
+     * @return array list of Documents objects
+     */
+    public function getDocuments() {
+        $searchDocs = $this->dbConn->prepare("SELECT * FROM inverted_index WHERE term_id = '" . $this->id . "'");
+        $searchDocs->execute();
+        
+        $docsIds = __($searchDocs->fetchAll(PDO::FETCH_ASSOC))->pluck('doc_id');
+        $docsIds = __($docsIds)->map(function ($id) {
+            return (int)$id;
+        });
+        
+        return $docsIds;
     }
 
     /**

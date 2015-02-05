@@ -59,8 +59,8 @@ class Document {
         $this->title = trim(strtok($this->content, "\n"));
         
         $insertDoc = $this->dbConn->prepare(""
-            . "INSERT INTO docs(file_name, title) "
-            . "VALUES ('" . $this->fileName . "', '" . $this->title . "')");
+            . "INSERT INTO docs(file_name, title, content) "
+            . "VALUES ('" . $this->fileName . "', '" . $this->title . "', '" . $this->content . "')");
         $result = $insertDoc->execute();
 
         if ($result) {

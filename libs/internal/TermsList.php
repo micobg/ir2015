@@ -16,11 +16,7 @@ class TermsList {
      * )
      */
     protected $list = array();
-    
-    public function __construct() {
-        //
-    }
-    
+
     /**
      * Insert term in the list
      * 

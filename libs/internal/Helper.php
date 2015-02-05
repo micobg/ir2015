@@ -17,20 +17,14 @@ class Helper {
         $result = array();
 
         $ls = scandir($dir);
-        foreach ($ls as $value)
-            {
-            if (!in_array($value, array('.', '..')))
-                {
-                if (is_dir($dir . DIRECTORY_SEPARATOR . $value))
-                {
+        foreach ($ls as $value) {
+            if (!in_array($value, array('.', '..'))) {
+                if (is_dir($dir . DIRECTORY_SEPARATOR . $value)) {
                     $subDirFiles = self::dirToArray($dir . DIRECTORY_SEPARATOR . $value);
-                    foreach ($subDirFiles as $file)
-                    {
+                    foreach ($subDirFiles as $file) {
                         $result[] = $value . DIRECTORY_SEPARATOR . $file;
                     }
-                }
-                else
-                {
+                } else {
                     $result[] = $value;
                 }
             }
