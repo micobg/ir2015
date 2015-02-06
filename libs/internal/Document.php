@@ -109,7 +109,7 @@ class Document {
                 // just add new occurrence
                 $invertedIndex->addOccurrence($invertedIndex->getInvertedIndex($termObj, $this), $index);
             } else {
-                $this->termsList->insert($termObj);
+                $this->termsList->push($termObj);
     
                 // save term-doc relation (inverted index) and position of occurrance
                 $invertedIndex->addRelation($termObj, $this, $index);

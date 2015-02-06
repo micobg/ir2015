@@ -34,7 +34,7 @@ if (!empty($getFile)) {
     <?php
 } else {
     $documentsManager = new DocumentsManager();
-    $files = $documentsManager->getUnindexedFiles();
+    $files = $documentsManager->getNotIndexedFiles();
 
     if (!empty($files)) {
     ?>

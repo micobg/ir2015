@@ -14,11 +14,11 @@ class DocumentsManager {
     }
     
     /**
-     * Reetrun list of all files from file/ dir that are not indexed
+     * Return list of all files from file/ dir that are not indexed
      * 
-     * @return array file names of all unindexe files
+     * @return array file names of all not indexed files
      */
-    public function getUnindexedFiles() {
+    public function getNotIndexedFiles() {
         // list all files that are not indexed
         $files = Helper::dirToArray(FILES_DIR);
 
@@ -47,6 +47,20 @@ class DocumentsManager {
         $selectAllDocs->execute();
         
         return $selectAllDocs->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Return all documents by given id
+     *
+     * @param int $id document id
+     *
+     * @return array the document
+     */
+    public function getDocumentsById($id) {
+        $selectDoc = $this->dbConn->prepare("SELECT * FROM docs WHERE id = '" . $id . "'");
+        $selectDoc->execute();
+
+        return $selectDoc->fetch();
     }
     
 }

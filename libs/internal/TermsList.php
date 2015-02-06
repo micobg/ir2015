@@ -22,8 +22,22 @@ class TermsList {
      * 
      * @param Term $termObj
      */
-    public function insert($termObj) {
+    public function push($termObj) {
         $this->list[$termObj->getTerm()] = $termObj;
+    }
+
+    /**
+     * Returns a term by given term string
+     *
+     * @param Term $termObj
+     * @param boolean $removeTerm
+     */
+    public function pop($termObj, $removeTerm = FALSE) {
+        $this->list[$termObj->getTerm()] = $termObj;
+
+        if ($removeTerm) {
+            unset($this->list[$termObj->getTerm()]);
+        }
     }
     
     public function contains($termObj) {
