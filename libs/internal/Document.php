@@ -56,12 +56,16 @@ class Document {
      */
     protected function insert() {
         // get firat line and use it as title
-        $this->title = trim(strtok($this->content, "\n"));
-        
-        $insertDoc = $this->dbConn->prepare(""
-            . "INSERT INTO docs(file_name, title, content) "
-            . "VALUES ('" . $this->fileName . "', '" . $this->title . "', '" . $this->content . "')");
-        $result = $insertDoc->execute();
+        $this->title = $this->getFileTitle();
+
+        $insertDoc = $this->dbConn->prepare("
+            INSERT INTO docs(file_name, title, content) 
+            VALUES (:fileName, :title, :contnet)");
+        $result = $insertDoc->execute(array(
+            ':fileName' => $this->fileName,
+            ':title' => $this->title,
+            ':contnet' => $this->content
+        ));
 
         if ($result) {
             $this->id = $this->dbConn->lastInsertId();
@@ -70,6 +74,18 @@ class Document {
         }
     }
 
+    /**
+     * Get file title
+     * 
+     * @throws Exception on error or empty file
+     */
+    protected function getFileTitle() {
+        $title = mb_substr($this->content, 0, 225, $this->encoding);
+
+        // remove spaces and new lines
+        return trim(preg_replace("/\n/", '', $title));
+    }
+    
     /**
      * Get file content
      * 
@@ -80,6 +96,7 @@ class Document {
         if (!$this->content) {
             throw new Exception('The file does not exist or it is empty.', 404);
         }
+        $this->encoding = mb_detect_encoding($this->content);
     }
     
     /**
@@ -124,9 +141,7 @@ class Document {
     /**
      * Find all potential terms from the document
      */
-    protected function extractTerms() {        
-        $this->encoding = mb_detect_encoding($this->content);
-
+    protected function extractTerms() {
         // get all words in the file
         $matches = array();
         preg_match_all('/\w+/iu', $this->content, $matches);

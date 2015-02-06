@@ -10,9 +10,11 @@ class SearchEngine {
     protected $dbConn;
 
     protected $searchWords;
+    protected $searchTerms;
 
     public function __construct() {
         $this->dbConn = dbConn::getInstance();
+        $this->searchTerms = new TermsList();
     }
 
     /**
@@ -22,7 +24,6 @@ class SearchEngine {
      */
     public function search($searchField) {
         $this->searchWords = $this->splitSearchWords($searchField);
-        var_dump($searchField);
 
         $documentsManager = new DocumentsManager();
         $docIds = $this->getResultSet();
@@ -59,9 +60,30 @@ class SearchEngine {
      */
     protected function splitSearchWords($searchField) {
         $matches = array();
-        preg_match_all('/\w+/iu', $searchField, $matches);
+        preg_match_all('/\w+/iu', mb_strtolower($searchField, mb_detect_encoding($searchField)), $matches);
         
         return $matches[0];
+    }
+    
+    /**
+     * Calculate docs scores
+     *
+     * @return array
+     */
+    protected function calculateDocsScores() {
+        $scores = array();
+        $tfIdfWeights = $this->getTfIdfForAllSearchWords();
+        $fullPhraseDocuments = $this->getFullPhraseDocuments();
+        foreach($tfIdfWeights as $docId => $termsTfIdf) {
+            $scores[$docId] = array_sum($termsTfIdf);
+            if (array_search($docId, $fullPhraseDocuments) !== FALSE) {
+                $scores[$docId] *= 2;
+            }
+        }
+        unset($docId);
+        unset($termsTfIdf);
+
+        return $scores;
     }
 
     /**
@@ -74,6 +96,7 @@ class SearchEngine {
         foreach ($this->searchWords as $word) {
             $term = new Term($word);
             $term->init();
+            $this->searchTerms->push($term);
 
             $docsIds = $term->getDocuments();
             foreach ($docsIds as $docId) {
@@ -85,25 +108,39 @@ class SearchEngine {
 
         return $tfIdfWeights;
     }
-
-    /**
-     * Calculate docs scores
-     *
-     * @return array
-     */
-    protected function calculateDocsScores() {
-        $scores = array();
-        $tfIdfWeights = $this->getTfIdfForAllSearchWords();
-        foreach($tfIdfWeights as $docId => $termsTfIdf) {
-            $scores[$docId] = array_sum($termsTfIdf);
-        }
-        unset($docId);
-        unset($termsTfIdf);
-
-        return $scores;
-    }
     
     /**
+     * Returns list of documents (as ids) which contains full searched phrase
+     * (not just individual words)
+     * 
+     * @return array docs ids
+     */
+    protected function getFullPhraseDocuments() {
+        $termsIds = array();
+        $terms = $this->searchTerms->popAll();
+        foreach ($terms as $termObj) {
+            $termsIds[] = $termObj->getId();
+        }
+        
+        $searchDocs = $this->dbConn->prepare("
+            SELECT
+                ii.doc_id, 
+                MAX(o.position) AS max_position,
+                MIN(o.position) AS min_position,
+                IF (COUNT(o.position) > 1, COUNT(o.position), 0) AS count_of_occurrances
+            FROM inverted_index AS ii
+            JOIN occurrences AS o 
+                ON o.inverted_index_id = ii.id
+            WHERE 
+                ii.term_id IN (" . implode(', ', $termsIds) . ")
+            GROUP BY ii.doc_id
+            HAVING max_position - min_position = count_of_occurrances - 1");
+        $searchDocs->execute();
+
+        return __($searchDocs->fetchAll())->pluck('doc_id');
+    }
+
+        /**
      * Calculate TF-IDF value for given term and doc
      * 
      * @param int $termId
@@ -206,5 +243,22 @@ class SearchEngine {
         $count = (int)$searchDocs->fetchColumn();
 
         return $count === 0 ? 1 : $count;
+    }
+    
+    /**
+     * Returns  search words
+     * 
+     * @return array
+     */
+    public function getSearchWords() {
+        $words = array();
+        foreach ($this->searchWords as $word) {
+            if (!array_search($word, Term::$stopWords)) {
+                $words[] = $word;
+            }
+        }
+        unset($word);
+        
+        return $words;
     }
 }

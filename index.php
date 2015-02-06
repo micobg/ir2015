@@ -45,11 +45,13 @@ if (!empty($searchValue)) {
                 ?>
                 <li>
                     <strong><?php echo $result['title']; ?></strong><br/>
-                    <?php echo trim(mb_substr($result['content'], $start, 300, $encoding)); ?>
-                    <span style="text-decoration: underline; color: blue;"
-                          onclick="showHideContent(<?php echo $result['id']; ?>)">Покажи/скрии целия текст</span>
+                    <?php echo trim(mb_substr($result['content'], $start, 300, $encoding)); ?>...
+                    <p style="text-decoration: underline; color: blue; cursor: pointer;  "
+                          onclick="showHideContent(<?php echo $result['id']; ?>)">Покажи/скрии целия текст</p>
 
-                    <div id="content_<?php echo $result['id']; ?>"></div>
+                    <div style="background-color: #eee; display: none;" id="content_<?php echo $result['id']; ?>">
+                        <?php echo preg_replace('/\W(' . implode(')|(', $searchEngine->getSearchWords()) . ')\W/ui', ' <strong style="color: red; ">$0</strong> ', $result['content']); ?>
+                    </div>
                 </li>
             <?php
             }
