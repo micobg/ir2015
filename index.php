@@ -61,15 +61,11 @@ if (!empty($searchValue)) {
     <?php
     }
 } else {
-
+    ?>
+        <p>Можете да търсите сред <strong><?php echo Helper::getCountOfDocuments(); ?></strong> документа с <strong><?php echo Helper::getCountOfTerms(); ?></strong> индексирани термина. :)</p>
+    <?php
 }
-
-try {
-//    $doc = new Document('text_001_2.txt');
-//    $doc->setup();
-} catch (Exception $ex) {
-    echo 'Exception: ' + $ex->getMessage();
-}
+    
 ?>
         
         

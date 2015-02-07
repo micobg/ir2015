@@ -33,4 +33,32 @@ class Helper {
         return $result;
     }
 
+    /**
+     * Get count of all indexed documents
+     * 
+     * @return type
+     */
+    public static function getCountOfDocuments() {
+        $dbConn = dbConn::getInstance();
+        $searchDocs = $dbConn->prepare("SELECT COUNT(*) FROM docs");
+        $searchDocs->execute();
+
+        return (int)$searchDocs->fetchColumn();
+        
+    }
+    
+    /**
+     * Get count of all indexed terms
+     * 
+     * @return type
+     */
+    public static function getCountOfTerms() {
+        $dbConn = dbConn::getInstance();
+        $searchDocs = $dbConn->prepare("SELECT COUNT(*) FROM terms");
+        $searchDocs->execute();
+
+        return (int)$searchDocs->fetchColumn();
+        
+    }
+    
 }
