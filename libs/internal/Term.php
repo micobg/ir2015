@@ -21,6 +21,9 @@ class Term {
         $this->term = $term;
         
         $this->dbConn = dbConn::getInstance();
+        
+        $termDb = $this->fetch();
+        $this->id = empty($termDb) ? 0 : $termDb['id'];
     }
 
     /**
@@ -35,12 +38,9 @@ class Term {
      * Save term if it is new and set termId
      */
     public function save() {
-        $term = $this->fetch();
-        if (empty($term)) {
+        if ($this->id === 0) {
             $this->id = $this->insert();
-        } else {
-            $this->id = $term['id'];
-            
+        } else {            
             // add +1 document (occurrence)
             $term['count_of_documents'] += 1;
             $this->update($term);

@@ -47,7 +47,7 @@ class SearchEngine {
             $document = $documentsManager->getDocumentsById($docId);
             $document['summary'] = $documentsManager->getSummary($document['content'], $searchWordsForMatching);
             $document['content'] = $documentsManager->formatConent($document['content'], $searchWordsForMatching);
-            $document['suggestions'] = $this->getSuggestions($docId, $searchWordsForMatching);
+            $document['suggestions'] = $this->getSuggestions($docId);
             $documents[] = $document;
         }
         unset($docId);
@@ -282,18 +282,42 @@ class SearchEngine {
     }
     
     /**
-     * Get 5 words from the document with highest TF-IDF
+     * Get 3 words from the document with potential the highest TF-IDF
+     * 
+     * Potential becaule we will look only for term.count_of_documents * doc.count_of_terms
+     * to be min. These metric is divider in TF-IDF formula and if it is lower, 
+     * the TF-IDF potential can be higher.
      * 
      * @param int $docId
-     * @param array $searchWordsForMatching
      * 
      * @return array
      */
-    protected function getSuggestions($docId, $searchWordsForMatching) {
-        
+    protected function getSuggestions($docId) {
+        $searchDocs = $this->dbConn->prepare("
+            SELECT
+                t.term,
+                COUNT(o.id) / (d.count_of_terms * t.count_of_documents) AS metric
+            FROM docs AS d
+            JOIN inverted_index AS ii
+                ON ii.doc_id = d.id
+            JOIN terms AS t
+                ON t.id = ii.term_id
+            JOIN occurrences AS o 
+                ON o.inverted_index_id = ii.id
+            WHERE
+                d.id = :doc_id
+            GROUP BY t.id
+            ORDER BY metric DESC
+            LIMIT 3
+        ");
+        $searchDocs->execute(array(
+            ':doc_id' => $docId
+        ));
+            
+        return __($searchDocs->fetchAll(PDO::FETCH_ASSOC))->pluck('term');
     }
 
-        /**
+    /**
      * Returns  search words
      * 
      * @return array

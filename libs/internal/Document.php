@@ -16,7 +16,7 @@ class Document {
     protected $encoding;
 
     protected $matches = array();
-    protected $matchesStatus = array(); // $this->matches as key and used status as value
+    protected $uniqueMatchesStatus = array(); // $this->matches as key and used status as value
     protected $termsList;
     protected $invertedIndex;
 
@@ -63,16 +63,20 @@ class Document {
         $matches = $this->extractTerms();
         foreach ($matches as $key => $word) {
             $term = (string)trim(mb_strtolower($word, $this->encoding));
-            if (!isset($this->matchesStatus[$term]) && array_search($term, Term::$stopWords) === FALSE) {
+            
+            if (array_search($term, Term::$stopWords) === FALSE) {
                 $this->matches[] = $term;
-                $this->matchesStatus[$term] = FALSE;
+
+                if (!isset($this->uniqueMatchesStatus[$term])) {
+                    $this->uniqueMatchesStatus[$term] = FALSE;
+                }
             }
         }
         unset($key);
         unset($word);
     }
 
-        /**
+    /**
      * Insert document in db
      */
     protected function insert() {
@@ -86,7 +90,7 @@ class Document {
             ':fileName' => $this->fileName,
             ':title' => $this->title,
             ':content' => $this->content,
-            ':count_of_terms' => count($this->matches)
+            ':count_of_terms' => count($this->uniqueMatchesStatus)
         ));
 
         if ($result) {
@@ -143,12 +147,14 @@ class Document {
      */
     protected function manageWord($word, $index) {
         // normalize
+        $word = mb_strtolower($word, $this->encoding);
+        
         $termObj = new Term($word);
 
         // save the term
-        if(!$this->matchesStatus[$word]) {
+        if(!$this->uniqueMatchesStatus[$word]) {
             $termObj->save();
-            $this->matchesStatus[$word] = TRUE;
+            $this->uniqueMatchesStatus[$word] = TRUE;
         }
         
         // add to term list

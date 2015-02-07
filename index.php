@@ -45,7 +45,16 @@ if (!empty($searchValue)) {
                 <li style="border-bottom: 1px solid #000; margin-bottom: 15px;">
                     <strong><?php echo $result['title']; ?></strong><br />
                     <em style="color: green;"><?php echo $result['file_name']; ?></em><br/>
-                    <?php echo $result['summary']; ?>
+                    <?php echo $result['summary']; ?><br />
+                    <strong>Предложения: </strong>
+                    <?php
+                    $suggestions = array();
+                    foreach($result['suggestions'] as $suggestion) {
+                        $suggestions[] = '<a href="' . BASE_URL . 'index.php?search=' . $suggestion . '">' . $suggestion . '</a>';
+                    }
+                    unset($suggestion);
+                    echo implode(' | ', $suggestions);
+                    ?><br />
                     <p style="text-decoration: underline; color: blue; cursor: pointer;  "
                           onclick="showHideContent(<?php echo $result['id']; ?>)">Покажи/скрии целия текст</p>
 
