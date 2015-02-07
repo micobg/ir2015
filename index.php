@@ -33,7 +33,7 @@ if (!empty($searchValue)) {
 
     if (empty($searchResult)) {
         ?>
-        Няма резултати.
+        <p>Няма резултати.</p>
         <?php
     } else {
         ?>
@@ -62,7 +62,7 @@ if (!empty($searchValue)) {
     }
 } else {
     ?>
-        <p>Можете да търсите сред <strong><?php echo Helper::getCountOfDocuments(); ?></strong> документа с <strong><?php echo Helper::getCountOfTerms(); ?></strong> индексирани термина. :)</p>
+        <p>Можете да търсите сред <strong><?php echo Helper::getCountOfDocuments(); ?></strong> документа с <strong><?php echo Helper::getCountOfTerms(); ?></strong> индексирани думи. :)</p>
     <?php
 }
     

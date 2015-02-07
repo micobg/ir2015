@@ -45,10 +45,13 @@ class InvertedIndex {
      */
     protected function insert($term, $doc) {
         // insert into db
-        $insertRelation = $this->dbConn->prepare(""
-            . "INSERT INTO inverted_index(term_id, doc_id) "
-            . "VALUES ('" . $term->getId() . "', '" . $doc->getId() . "')");
-        $result = $insertRelation->execute();
+        $insertRelation = $this->dbConn->prepare("
+            INSERT INTO inverted_index(term_id, doc_id)
+            VALUES (:term_id, :doc_id)");
+        $result = $insertRelation->execute(array(
+            ':term_id' => $term->getId(),
+            ':doc_id' => $doc->getId()
+        ));
         if (!$result) {
             throw new Exception('Insertion of relation into inverted index failed', 500);
         }

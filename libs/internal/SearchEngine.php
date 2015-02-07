@@ -12,9 +12,23 @@ class SearchEngine {
     protected $searchWords;
     protected $searchTerms;
 
+    protected $fullPhraseMultiplier = 2;
+
+    /**
+     * Cache
+     */
+    protected $cache;
+
     public function __construct() {
         $this->dbConn = dbConn::getInstance();
         $this->searchTerms = new TermsList();
+        
+        // init the cache
+        $this->cache = array(
+            'countOfAllDocuments' => $this->countOfAllDocuments(),
+            'countOfDocumentsContainingTheTerm' => array(),
+            'countOfWordsInDocument' => array()
+        );
     }
 
     /**
@@ -33,6 +47,7 @@ class SearchEngine {
             $document = $documentsManager->getDocumentsById($docId);
             $document['summary'] = $documentsManager->getSummary($document['content'], $searchWordsForMatching);
             $document['content'] = $documentsManager->formatConent($document['content'], $searchWordsForMatching);
+            $document['suggestions'] = $this->getSuggestions($docId, $searchWordsForMatching);
             $documents[] = $document;
         }
         unset($docId);
@@ -81,7 +96,7 @@ class SearchEngine {
         foreach($tfIdfWeights as $docId => $termsTfIdf) {
             $scores[$docId] = array_sum($termsTfIdf);
             if (array_search($docId, $fullPhraseDocuments) !== FALSE) {
-                $scores[$docId] *= 2;
+                $scores[$docId] *= $this->fullPhraseMultiplier;
             }
         }
         unset($docId);
@@ -143,7 +158,7 @@ class SearchEngine {
 
         return __($searchDocs->fetchAll())->pluck('doc_id');
     }
-
+    
         /**
      * Calculate TF-IDF value for given term and doc
      * 
@@ -181,9 +196,12 @@ class SearchEngine {
             SELECT COUNT(occurrences.id)
             FROM inverted_index
             JOIN occurrences ON occurrences.inverted_index_id = inverted_index.id
-            WHERE inverted_index.term_id = '" . $termId . "'
-                AND inverted_index.doc_id = '" . $docId . "'");
-        $searchDocs->execute();
+            WHERE inverted_index.term_id = :term_id
+                AND inverted_index.doc_id = :doc_id");
+        $searchDocs->execute(array(
+            ':term_id' => $termId,
+            ':doc_id' => $docId
+        ));
         
         return (int)$searchDocs->fetchColumn();
     }
@@ -191,21 +209,27 @@ class SearchEngine {
     /**
      * Count of words in the document
      * 
-     * @param int $termId
      * @param int $docId
      * 
      * @return int the value
      */
-    protected function countOfWordsInDocument($termId, $docId) {
+    protected function countOfWordsInDocument($docId) {
+        if (isset($this->cache['countOfWordsInDocument'][$docId])) {
+            return $this->cache['countOfWordsInDocument'][$docId];
+        }
+        
         $searchDocs = $this->dbConn->prepare("
-            SELECT COUNT(*)
-            FROM inverted_index
-            WHERE inverted_index.term_id = '" . $termId . "'
-                AND inverted_index.doc_id = '" . $docId . "'");
-        $searchDocs->execute();
+            SELECT count_of_words
+            FROM docs
+            WHERE id = :doc_id");
+        $searchDocs->execute(array(
+            ':doc_id' => $docId
+        ));
         $count = (int)$searchDocs->fetchColumn();
         
-        return $count === 0 ? 1 : $count;
+        // prevent division by zero
+        $this->cache['countOfWordsInDocument'][$docId] = $count === 0 ? 1 : $count;
+        return $this->cache['countOfWordsInDocument'][$docId];
     }
 
     /**
@@ -216,7 +240,7 @@ class SearchEngine {
      * @return float TF-IDF value
      */
     protected function calculateIdf($termId) {
-        return log(floatval($this->countOfAllDocuments() / $this->countOfDocumentsContainingTheTerm($termId)));
+        return log(floatval($this->cache['countOfAllDocuments'] / $this->countOfDocumentsContainingTheTerm($termId)));
     }
 
     /**
@@ -239,17 +263,37 @@ class SearchEngine {
      * @return int
      */
     protected function countOfDocumentsContainingTheTerm($termId) {
+        if (isset($this->cache['countOfDocumentsContainingTheTerm'][$termId])) {
+            return $this->cache['countOfDocumentsContainingTheTerm'][$termId];
+        }
+        
         $searchDocs = $this->dbConn->prepare("
             SELECT COUNT(*)
             FROM inverted_index
-            WHERE inverted_index.term_id = '" . $termId . "'");
-        $searchDocs->execute();
+            WHERE inverted_index.term_id = :term_id");
+        $searchDocs->execute(array(
+            ':term_id' => $termId
+        ));
         $count = (int)$searchDocs->fetchColumn();
 
-        return $count === 0 ? 1 : $count;
+        // prevent division by zero
+        $this->cache['countOfDocumentsContainingTheTerm'][$termId] = $count === 0 ? 1 : $count;
+        return $this->cache['countOfDocumentsContainingTheTerm'][$termId];
     }
     
     /**
+     * Get 5 words from the document with highest TF-IDF
+     * 
+     * @param int $docId
+     * @param array $searchWordsForMatching
+     * 
+     * @return array
+     */
+    protected function getSuggestions($docId, $searchWordsForMatching) {
+        
+    }
+
+        /**
      * Returns  search words
      * 
      * @return array

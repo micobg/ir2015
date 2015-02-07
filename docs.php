@@ -60,9 +60,6 @@ if (!empty($getFile)) {
     <?php
 }
 
-
 ?>
-
-
     </body>
 </html>

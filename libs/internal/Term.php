@@ -40,6 +40,10 @@ class Term {
             $this->id = $this->insert();
         } else {
             $this->id = $term['id'];
+            
+            // add +1 document (occurrence)
+            $term['count_of_documents'] += 1;
+            $this->update($term);
         }
     }
 
@@ -49,8 +53,10 @@ class Term {
      * @return array term from db
      */
     protected function fetch() {
-        $searchTerm = $this->dbConn->prepare("SELECT * FROM terms WHERE term = '" . $this->term . "'");
-        $searchTerm->execute();
+        $searchTerm = $this->dbConn->prepare("SELECT * FROM terms WHERE term = :term");
+        $searchTerm->execute(array(
+            ':term' => $this->term
+        ));
         
         return $searchTerm->fetch(PDO::FETCH_ASSOC);
     }
@@ -61,8 +67,13 @@ class Term {
      * @return int id of inserted term
      */
     protected function insert() {
-        $insertTerm = $this->dbConn->prepare("INSERT INTO terms(term) VALUES ('" . $this->term . "')");
-        $result = $insertTerm->execute();
+        $insertTerm = $this->dbConn->prepare("
+            INSERT INTO terms(term, count_of_documents)
+            VALUES (:term, :count_of_documents)");
+        $result = $insertTerm->execute(array(
+            ':term' => $this->term,
+            ':count_of_documents' => 1 // first occurrence
+        ));
         if (!$result) {
             throw new Exception('Insertion of term into db failed', 500);
         } 
@@ -70,6 +81,29 @@ class Term {
         $this->id = $this->dbConn->lastInsertId();
         
         return (int)$this->id;
+    }
+    
+    /**
+     * Update 
+     * 
+     * @param array $term fetched and modified term
+     * 
+     * @return int id of inserted term
+     */
+    protected function update($term) {
+        $insertTerm = $this->dbConn->prepare("
+            UPDATE terms
+            SET
+                count_of_documents = :count_of_documents
+            WHERE
+                id = :id");
+        $result = $insertTerm->execute(array(
+            ':count_of_documents' => $term['count_of_documents'],
+            ':id' => $term['id']
+        ));
+        if (!$result) {
+            throw new Exception('Update of term failed', 500);
+        }
     }
     
     /**

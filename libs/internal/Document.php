@@ -15,7 +15,10 @@ class Document {
     protected $content;
     protected $encoding;
 
+    protected $matches;
+    protected $uniqueMatchesStatus = array(); // unique of $this->matches as key and used status as value
     protected $termsList;
+    protected $invertedIndex;
 
     /**
      * Init document object
@@ -41,6 +44,8 @@ class Document {
         // get files content
         $this->getFileContent();
 
+        $this->filterMatches();
+        
         // insert the document in db
         $this->insert();
 
@@ -52,6 +57,22 @@ class Document {
     }
     
     /**
+     * Filter all matches
+     */
+    protected function filterMatches() {
+        foreach ($this->matches as $key => $word) {
+            if (array_search($word, Term::$stopWords) !== FALSE) {
+                unset($this->matches[$key]);
+            } else {
+                $this->matches[$key] = mb_strtolower($word, $this->encoding);
+                $this->uniqueMatchesStatus[$word] = FALSE;
+            }
+        }
+        unset($key);
+        unset($word);
+    }
+
+        /**
      * Insert document in db
      */
     protected function insert() {
@@ -59,12 +80,13 @@ class Document {
         $this->title = $this->getFileTitle();
 
         $insertDoc = $this->dbConn->prepare("
-            INSERT INTO docs(file_name, title, content) 
-            VALUES (:fileName, :title, :content)");
+            INSERT INTO docs(file_name, title, content, count_of_terms) 
+            VALUES (:fileName, :title, :content, :count_of_terms)");
         $result = $insertDoc->execute(array(
             ':fileName' => $this->fileName,
             ':title' => $this->title,
-            ':content' => $this->content
+            ':content' => $this->content,
+            ':count_of_terms' => count($this->matches)
         ));
 
         if ($result) {
@@ -97,6 +119,7 @@ class Document {
             throw new Exception('The file does not exist or it is empty.', 404);
         }
         $this->encoding = mb_detect_encoding($this->content);
+        $this->matches = $this->extractTerms();
     }
     
     /**
@@ -104,38 +127,41 @@ class Document {
      * relations.
      */
     protected function manageMatches() {
-        $invertedIndex = new InvertedIndex();
+        $this->invertedIndex = new InvertedIndex();
 
-        $matches = $this->extractTerms();
-        foreach ($matches as $index => $word) {
-            // normalize
-            $word = mb_strtolower($word, $this->encoding);
-
-            // skip stop words
-            $termObj = new Term($word);
-            
-            if ($termObj->isStopWord()) {
-                continue;
-            }
-
-            // save the term
-            $termObj->save();
-            
-            // add to term list
-            if ($this->termsList->contains($termObj)) {
-                // just add new occurrence
-                $invertedIndex->addOccurrence($invertedIndex->getInvertedIndex($termObj, $this), $index);
-            } else {
-                $this->termsList->push($termObj);
-    
-                // save term-doc relation (inverted index) and position of occurrance
-                $invertedIndex->addRelation($termObj, $this, $index);
-            }
-            
-            unset($termObj);
+        foreach ($this->matches as $index => $word) {
+            $this->manageWord($word, $index);
         }
         unset($index);
         unset($word);
+    }
+
+    /**
+     * Save the term and relation.
+     * 
+     * @param string $word
+     * @param int $index
+     */
+    protected function manageWord($word, $index) {
+        // normalize
+        $termObj = new Term($word);
+
+        // save the term
+        if(!$this->uniqueMatchesStatus[$word]) {
+            $termObj->save();
+            $this->uniqueMatchesStatus[$word] = TRUE;
+        }
+        
+        // add to term list
+        if ($this->termsList->contains($termObj)) {
+            // just add new occurrence
+            $this->invertedIndex->addOccurrence($this->invertedIndex->getInvertedIndex($termObj, $this), $index);
+        } else {
+            $this->termsList->push($termObj);
+
+            // save term-doc relation (inverted index) and position of occurrance
+            $this->invertedIndex->addRelation($termObj, $this, $index);
+        }
     }
 
     /**
