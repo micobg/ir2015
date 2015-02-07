@@ -60,11 +60,11 @@ class Document {
 
         $insertDoc = $this->dbConn->prepare("
             INSERT INTO docs(file_name, title, content) 
-            VALUES (:fileName, :title, :contnet)");
+            VALUES (:fileName, :title, :content)");
         $result = $insertDoc->execute(array(
             ':fileName' => $this->fileName,
             ':title' => $this->title,
-            ':contnet' => $this->content
+            ':content' => $this->content
         ));
 
         if ($result) {
@@ -117,7 +117,7 @@ class Document {
             if ($termObj->isStopWord()) {
                 continue;
             }
-            
+
             // save the term
             $termObj->save();
             

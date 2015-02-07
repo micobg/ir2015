@@ -95,7 +95,7 @@ class Term {
      * @return boolean
      */
     public function isStopWord() {
-        return array_search($this->term, self::stopWords) === FALSE ? FALSE : TRUE;
+        return array_search($this->term, self::$stopWords) === FALSE ? FALSE : TRUE;
     }
 
     /**

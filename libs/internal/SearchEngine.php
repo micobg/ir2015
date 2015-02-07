@@ -24,12 +24,16 @@ class SearchEngine {
      */
     public function search($searchField) {
         $this->searchWords = $this->splitSearchWords($searchField);
-
+        $searchWordsForMatching = $this->getSearchWords();
+        
         $documentsManager = new DocumentsManager();
         $docIds = $this->getResultSet();
         $documents = array();
         foreach ($docIds as $docId) {
-            $documents[] = $documentsManager->getDocumentsById($docId);
+            $document = $documentsManager->getDocumentsById($docId);
+            $document['summary'] = $documentsManager->getSummary($document['content'], $searchWordsForMatching);
+            $document['content'] = $documentsManager->formatConent($document['content'], $searchWordsForMatching);
+            $documents[] = $document;
         }
         unset($docId);
 

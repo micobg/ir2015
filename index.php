@@ -41,16 +41,16 @@ if (!empty($searchValue)) {
             <?php
             foreach ($searchResult as $result) {
                 $encoding = mb_detect_encoding($result['content']);
-                $start = mb_strlen($result['title'], $encoding);
                 ?>
-                <li>
-                    <strong><?php echo $result['title']; ?></strong><br/>
-                    <?php echo trim(mb_substr($result['content'], $start, 300, $encoding)); ?>...
+                <li style="border-bottom: 1px solid #000; margin-bottom: 15px;">
+                    <strong><?php echo $result['title']; ?></strong><br />
+                    <em style="color: green;"><?php echo $result['file_name']; ?></em><br/>
+                    <?php echo $result['summary']; ?>
                     <p style="text-decoration: underline; color: blue; cursor: pointer;  "
                           onclick="showHideContent(<?php echo $result['id']; ?>)">Покажи/скрии целия текст</p>
 
-                    <div style="background-color: #eee; display: none;" id="content_<?php echo $result['id']; ?>">
-                        <?php echo preg_replace('/\W(' . implode(')|(', $searchEngine->getSearchWords()) . ')\W/ui', ' <strong style="color: red; ">$0</strong> ', $result['content']); ?>
+                    <div style="padding: 15px; background-color: #eee; display: none;" id="content_<?php echo $result['id']; ?>">
+                        <?php echo $result['content']; ?>
                     </div>
                 </li>
             <?php
