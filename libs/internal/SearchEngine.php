@@ -268,9 +268,9 @@ class SearchEngine {
         }
         
         $searchDocs = $this->dbConn->prepare("
-            SELECT COUNT(*)
-            FROM inverted_index
-            WHERE inverted_index.term_id = :term_id");
+            SELECT count_of_documents
+            FROM terms
+            WHERE id = :term_id");
         $searchDocs->execute(array(
             ':term_id' => $termId
         ));
